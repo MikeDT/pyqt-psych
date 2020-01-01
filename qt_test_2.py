@@ -5,175 +5,140 @@ Created on Fri Dec 27 13:23:25 2019
 @author: miketaylor
 """
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, uic
+import sys
 
-class MyWizard(QtWidgets.QWidget):
+class MyWizard(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # vertical layout, wraps content layout and buttons layout
-        # could be almost any layout actually
-        self.disclaimer_text = open("Disclaimer.txt",'r').read()
-        self.create_buttons()
-        self.display_intro_screen()
         self.setWindowTitle('Ellsberg, Pullman and Colman Test')
+        self.window = uic.loadUi('Screen.ui', self)
+        # Import all the text from external sources (simplifies future changes)
+        self.disclaimer_text = open('text\\' + 'Disclaimer.txt', 'r').read()
+        self.intro_text = open('text\\' + 'Introduction.txt', 'r').read()
+        self.instruction_text = open('text\\' + 'Instructions.txt', 'r').read()
 
+        # The possible screens
+        self.screens = ['Intro', 'Consent', 'Demographic',
+                        'Instruction', 'Test', 'Debrief']
 
-    def screen_clear(self):
-        # remove old content
-        self.content_layout.removeWidget(self.content)
-        self.content.deleteLater()
-        
-    def create_buttons(self):
-        # back, forward buttons wrapped in horizontal layout
-#        self.vertical_layout = QtWidgets.QVBoxLayout()
-#        self.setLayout(self.vertical_layout)
-#        self.content_layout = QtWidgets.QVBoxLayout()
-#        self.button_layout = QtWidgets.QHBoxLayout()
-        self.vertical_layout = QtWidgets.QVBoxLayout()
-        #self.setLayout(self.vertical_layout)
-        self.content_layout = QtWidgets.QVBoxLayout()
-        self.demo_button_layout = QtWidgets.QVBoxLayout()
-        self.nav_button_layout = QtWidgets.QHBoxLayout()
-        self.nav_button_layout.setAlignment(QtCore.Qt.AlignBottom)
-        
-        self.nav_button_layout.addStretch()
-        self.consent_check_box = QtWidgets.QCheckBox("I give consent")
-        self.nav_button_layout.addWidget(self.consent_check_box)
-        self.back_button = QtWidgets.QPushButton('Back')
-        self.back_button.clicked.connect(self.back_button_clicked)
-        self.nav_button_layout.addWidget(self.back_button)
-        self.forward_button = QtWidgets.QPushButton('Next')
-        self.forward_button.clicked.connect(self.forward_button_clicked)
-        self.nav_button_layout.addWidget(self.forward_button)
-        self.age_spinbox = QtWidgets.QSpinBox()
-        self.demo_button_layout.addWidget(self.age_spinbox)
-        self.gender_combobox = QtWidgets.QComboBox()
-        self.gender_combobox.addItem("Female")
-        self.gender_combobox.addItem("Male")
-        self.gender_combobox.addItem("Other")
-        self.gender_combobox.addItem("Prefer Not To Say")
-        self.demo_button_layout.addWidget(self.gender_combobox)
-        self.edu_combobox = QtWidgets.QComboBox()
-        self.edu_combobox.addItem("High School")
-        self.edu_combobox.addItem("Associate's")
-        self.edu_combobox.addItem("Bachelor's")
-        self.edu_combobox.addItem("Master's")
-        self.edu_combobox.addItem("PhD")
-        self.edu_combobox.addItem("Other")
-        self.edu_combobox.addItem("Prefer Not To Say")
-        self.demo_button_layout.addWidget(self.edu_combobox)
-        self.vertical_layout.addLayout(self.demo_button_layout)
-        self.vertical_layout.addLayout(self.nav_button_layout)
-        self.consent_check_box.hide()
-        
-    def hide_buttons(self):
-        """
-        The back button is clicked.
-        """
-        self.consent_check_box.hide()
-        self.gender_combobox.hide()
-        self.age_spinbox.hide()
-        self.edu_combobox.hide()
-        
-        
-    def display_intro_screen(self):
-        """
-        The back button is clicked.
-        """
-        # content widget and layout
-        self.content = QtWidgets.QTextEdit('Here are some introductory statements')
-        self.content.setReadOnly(True) # customize with your content
-        self.content_layout.addWidget(self.content)
-        self.vertical_layout.addLayout(self.content_layout)
-        self.back_button.hide()
-        self.hide_buttons()
-        self.current_screen = 'intro'
+        self.csv_db = open('database\\csv_db.csv', 'a')
+        self.window.back_btn.clicked.connect(self.back_button_clicked)
+        self.window.next_btn.clicked.connect(self.next_button_clicked)
+        self.window.save_btn.clicked.connect(self.save_button_clicked)
+        self.window.tabs.currentChanged.connect(self.refresh_nav_buttons)
 
-    def display_consent_screen(self):
-        """
-        The back button is clicked.
-        """
-        # content widget and layout
-        self.content = QtWidgets.QTextEdit(self.disclaimer_text)
-        self.content.setReadOnly(True) # customize with your content
-        self.content_layout.addWidget(self.content)
-        self.vertical_layout.addLayout(self.content_layout)
-        self.back_button.show()
-        self.consent_check_box.show()
-        self.current_screen = 'consent'
-        
-    def display_demographic_screen(self):
-        """
-        The back button is clicked.
-        """
-        # content widget and layout
-        self.content = QtWidgets.QLabel('Demographic Screen') # customize with your content        
-        self.gender_combobox.show()
-        self.age_spinbox.show()
-        self.edu_combobox.show()
-        self.content_layout.addWidget(self.content)
-        self.vertical_layout.addLayout(self.content_layout)
-        self.current_screen = 'demographic'
-
-    def display_instructions_screen(self):
-        """
-        The back button is clicked.
-        """
-        # content widget and layout
-        self.content = QtWidgets.QTextEdit('Here are some instructions')
-        self.content.setReadOnly(True) # customize with your content
-        self.content_layout.addWidget(self.content)
-        self.vertical_layout.addLayout(self.content_layout)
-        self.current_screen = 'instructions'
-
-    def display_test_screen(self):
-        """
-        The back button is clicked.
-        """
-        # content widget and layout
-        self.content = QtWidgets.QLabel('Test Screen') # customize with your content
-        self.content_layout.addWidget(self.content)
-        self.vertical_layout.addLayout(self.content_layout)
-        self.current_screen = 'test'
+        self.window.gender_combobox.addItem("Female")
+        self.window.gender_combobox.addItem("Male")
+        self.window.gender_combobox.addItem("Other")
+        self.window.gender_combobox.addItem("Prefer Not To Say")
+        self.window.edu_combobox.addItem("High School")
+        self.window.edu_combobox.addItem("Associate's")
+        self.window.edu_combobox.addItem("Bachelor's")
+        self.window.edu_combobox.addItem("Master's")
+        self.window.edu_combobox.addItem("PhD")
+        self.window.edu_combobox.addItem("Other")
+        self.window.edu_combobox.addItem("Prefer Not To Say")
+        self.window.intro_textbox.setText(self.intro_text)
+        self.window.intro_textbox.setReadOnly(True)
+        self.window.disclaimer_textbox.setText(self.disclaimer_text)
+        self.window.disclaimer_textbox.setReadOnly(True)
+        self.window.instr_textbox.setText(self.instruction_text)
+        self.window.instr_textbox.setReadOnly(True)
+        self.window.back_btn.hide()
+        self.window.save_btn.hide()
+        self.window.show()
 
     def back_button_clicked(self):
         """
-        The back button is clicked.
+        Dictates the actions for clicking the back button on a given screen
+        using the screen_fxn_dict dictionary that houses the screen dispay
+        functions, selected by the screen + button tuple that interacts with
+        the screen_nav_graph dictionary.
         """
-        self.screen_clear()
-        self.hide_buttons()
-        if self.current_screen == 'consent':
-            self.display_intro_screen()    
-        elif self.current_screen == 'demographic':
-            self.display_consent_screen()
-        elif self.current_screen == 'instructions':
-            self.display_demographic_screen()
-        elif self.current_screen == 'test':
-            self.display_instructions_screen()
-            
-    def forward_button_clicked(self):
+        self.window.tabs.setCurrentIndex(self.window.tabs.currentIndex() - 1)
+        self.window.next_btn.show()
+        self.window.back_btn.show()
+        self.window.save_btn.hide()
+        if self.window.tabs.currentIndex() == 0:
+            self.window.back_btn.hide()
+
+    def is_task_complete(self):
         """
-        The forward button is clicked.
+        Checks all activities, demographics etc have been submitted prior to
+        allowing the participant to save and exit
         """
-        self.screen_clear()
-        self.hide_buttons()
-        if self.current_screen == 'intro':
-            self.display_consent_screen()
-        elif self.current_screen == 'consent':
-            if self.consent_check_box.isChecked():
-                self.display_demographic_screen()
-            else:
-                self.display_consent_screen()
-        elif self.current_screen == 'demographic':
-            self.display_instructions_screen()
-        elif self.current_screen == 'instructions':
-            self.display_test_screen()
-        elif self.current_screen == 'test':
-            self.display_test_screen()
-            
-            
+        pass
+        #  return error for what is not yet submitted
+
+    def get_details(self):
+        """
+        Get the all the details from the experiment (incl. demographics and
+        consent), and cast them into a csv ready string
+        """
+        username = str(self.window.username_textbox.text())
+        consent = str(self.window.consent_checkbox.isChecked())
+        age = str(self.window.age_spinbox.value())
+        education = str(self.window.edu_combobox.currentText())
+        gender = str(self.window.gender_combobox.currentText())
+        urn1_result = str(self.window.urn1_radiobutton.isChecked())
+        urn2_result = str(self.window.urn2_radiobutton.isChecked()) #not strictly necessary, but belt and braces
+        urn_condition = str(None)
+        return (username + ', ' + consent + ', ' + age + ', ' +
+                education + ', ' + gender + ', ' + urn1_result + ', ' +
+                urn2_result + ', ' + urn_condition)
+
+    def show_save_check(self):
+        """
+        Check whether the save button should be shown, based upon the
+        completion of all the relevant criteria (consent, demographics, test)
+        """
+        if self.window.consent_checkbox.isChecked():
+            self.window.save_btn.show()
+        else:
+            self.window.save_btn.hide()
+
+    def next_button_clicked(self):
+        """
+        Dictates the actions for clicking the next button on a given screen
+        using the screen_fxn_dict dictionary that houses the screen dispay
+        functions, selected by the screen + button tuple that interacts with
+        the screen_nav_graph dictionary.
+        """
+        self.window.tabs.setCurrentIndex(self.window.tabs.currentIndex() + 1)
+        self.window.next_btn.show()
+        self.window.back_btn.show()
+        if self.window.tabs.currentIndex() == 5:
+            self.window.next_btn.hide()
+            self.show_save_check()
+
+    def save_button_clicked(self):
+        """
+        Saves the demographics to csv, closes the csv and exits the application
+        """
+        self.csv_db.write((self.get_details()))
+        self.csv_db.write('\n')
+        self.csv_db.close()
+        sys.exit(app.exec_())
+
+    def refresh_nav_buttons(self):
+        """
+        Refreshs the navigation buttons upon tab clicks to ensure only the
+        relevant buttons are shown
+        """
+        if self.window.tabs.currentIndex() == 0:
+            self.window.save_btn.hide()
+            self.window.back_btn.hide()
+        elif self.window.tabs.currentIndex() == 5:
+            self.show_save_check()
+            self.window.next_btn.hide()
+            self.window.back_btn.show()
+        else:
+            self.window.next_btn.show()
+            self.window.back_btn.show()
+
+
 # loads to info page
 # then consent
         # then demographics
@@ -182,17 +147,12 @@ class MyWizard(QtWidgets.QWidget):
         # will need a logger
         # create a history file to support pseudo random blah
         # qtab widget
-        
 
 app = QtWidgets.QApplication([])
-
 wizard = MyWizard()
 wizard.setWindowTitle('MyWizard Example')
-wizard.setFixedSize(600, 800)
 wizard.show()
-
 app.exec_()
-
 
 # To Do
 # Shift forward/back buttons to bottom
@@ -200,5 +160,3 @@ app.exec_()
 # move intructions to text
 # create the random images and the buttons
 # create a logger
-
-# 
