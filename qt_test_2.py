@@ -12,40 +12,50 @@ class MyWizard(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setWindowTitle('Ellsberg, Pullman and Colman Test')
+
+        # Import the designer UI and name the window
         self.window = uic.loadUi('Screen.ui', self)
-        # Import all the text from external sources (simplifies future changes)
-        self.disclaimer_text = open('text\\' + 'Disclaimer.txt', 'r').read()
-        self.intro_text = open('text\\' + 'Introduction.txt', 'r').read()
-        self.instruction_text = open('text\\' + 'Instructions.txt', 'r').read()
+        self.setWindowTitle('Ellsberg, Pullman and Colman Test')
 
-        # The possible screens
-        self.screens = ['Intro', 'Consent', 'Demographic',
-                        'Instruction', 'Test', 'Debrief']
-
+        # Import the csv 'database'
         self.csv_db = open('database\\csv_db.csv', 'a')
-        self.window.back_btn.clicked.connect(self.back_button_clicked)
-        self.window.next_btn.clicked.connect(self.next_button_clicked)
-        self.window.save_btn.clicked.connect(self.save_button_clicked)
-        self.window.tabs.currentChanged.connect(self.refresh_nav_buttons)
 
+        # Import all the text from external sources (simplifies future changes)
+        # and set the fill the text boxes (read only to prevent user edits)
+        self.intro_text = open('text\\' + 'Introduction.txt', 'r').read()
+        self.window.intro_textbox.setText(self.intro_text)
+        self.window.intro_textbox.setReadOnly(True)
+        self.disclaimer_text = open('text\\' + 'Disclaimer.txt', 'r').read()
+        self.window.disclaimer_textbox.setText(self.disclaimer_text)
+        self.window.disclaimer_textbox.setReadOnly(True)
+        self.instruction_text = open('text\\' + 'Instructions.txt', 'r').read()
+        self.window.instr_textbox.setText(self.instruction_text)
+        self.window.instr_textbox.setReadOnly(True)
+
+#        # The possible screens
+#        self.screens = ['Intro', 'Consent', 'Demographic',
+#                        'Instruction', 'Test', 'Debrief']
+
+        # Adjust the combobox content to support the valid values
+        self.window.gender_combobox.addItem("Prefer Not To Say")
         self.window.gender_combobox.addItem("Female")
         self.window.gender_combobox.addItem("Male")
         self.window.gender_combobox.addItem("Other")
-        self.window.gender_combobox.addItem("Prefer Not To Say")
+        self.window.edu_combobox.addItem("Prefer Not To Say")
         self.window.edu_combobox.addItem("High School")
         self.window.edu_combobox.addItem("Associate's")
         self.window.edu_combobox.addItem("Bachelor's")
         self.window.edu_combobox.addItem("Master's")
         self.window.edu_combobox.addItem("PhD")
         self.window.edu_combobox.addItem("Other")
-        self.window.edu_combobox.addItem("Prefer Not To Say")
-        self.window.intro_textbox.setText(self.intro_text)
-        self.window.intro_textbox.setReadOnly(True)
-        self.window.disclaimer_textbox.setText(self.disclaimer_text)
-        self.window.disclaimer_textbox.setReadOnly(True)
-        self.window.instr_textbox.setText(self.instruction_text)
-        self.window.instr_textbox.setReadOnly(True)
+
+        # Connect the buttons and tabs to the relevant functions
+        self.window.back_btn.clicked.connect(self.back_button_clicked)
+        self.window.next_btn.clicked.connect(self.next_button_clicked)
+        self.window.save_btn.clicked.connect(self.save_button_clicked)
+        self.window.tabs.currentChanged.connect(self.refresh_nav_buttons)
+
+        # Set the default conditions for the nav buttons and show the screen
         self.window.back_btn.hide()
         self.window.save_btn.hide()
         self.window.show()
@@ -63,6 +73,36 @@ class MyWizard(QtWidgets.QMainWindow):
         self.window.save_btn.hide()
         if self.window.tabs.currentIndex() == 0:
             self.window.back_btn.hide()
+
+    def next_button_clicked(self):
+        """
+        Dictates the actions for clicking the next button on a given screen
+        using the screen_fxn_dict dictionary that houses the screen dispay
+        functions, selected by the screen + button tuple that interacts with
+        the screen_nav_graph dictionary.
+        """
+        self.window.tabs.setCurrentIndex(self.window.tabs.currentIndex() + 1)
+        self.window.next_btn.show()
+        self.window.back_btn.show()
+        if self.window.tabs.currentIndex() == 5:
+            self.window.next_btn.hide()
+            self.show_save_check()
+
+    def refresh_nav_buttons(self):
+        """
+        Refreshs the navigation buttons upon tab clicks to ensure only the
+        relevant buttons are shown
+        """
+        if self.window.tabs.currentIndex() == 0:
+            self.window.save_btn.hide()
+            self.window.back_btn.hide()
+        elif self.window.tabs.currentIndex() == 5:
+            self.show_save_check()
+            self.window.next_btn.hide()
+            self.window.back_btn.show()
+        else:
+            self.window.next_btn.show()
+            self.window.back_btn.show()
 
     def is_task_complete(self):
         """
@@ -82,12 +122,14 @@ class MyWizard(QtWidgets.QMainWindow):
         age = str(self.window.age_spinbox.value())
         education = str(self.window.edu_combobox.currentText())
         gender = str(self.window.gender_combobox.currentText())
-        urn1_result = str(self.window.urn1_radiobutton.isChecked())
-        urn2_result = str(self.window.urn2_radiobutton.isChecked()) #not strictly necessary, but belt and braces
-        urn_condition = str(None)
+        urn_condition = str(2)  # 2, 10, 100
+        urn_position = str(0)  # 0 random urn on the right, 1 on the left
+        urn_selected = str(0)  # 0 random urn, 1 50/50 urn
+        marble_received = str('Red')
         return (username + ', ' + consent + ', ' + age + ', ' +
-                education + ', ' + gender + ', ' + urn1_result + ', ' +
-                urn2_result + ', ' + urn_condition)
+                education + ', ' + gender + ', ' +
+                urn_condition + ', ' + urn_position + ', ' +
+                urn_selected + ', ' + marble_received)
 
     def show_save_check(self):
         """
@@ -99,20 +141,6 @@ class MyWizard(QtWidgets.QMainWindow):
         else:
             self.window.save_btn.hide()
 
-    def next_button_clicked(self):
-        """
-        Dictates the actions for clicking the next button on a given screen
-        using the screen_fxn_dict dictionary that houses the screen dispay
-        functions, selected by the screen + button tuple that interacts with
-        the screen_nav_graph dictionary.
-        """
-        self.window.tabs.setCurrentIndex(self.window.tabs.currentIndex() + 1)
-        self.window.next_btn.show()
-        self.window.back_btn.show()
-        if self.window.tabs.currentIndex() == 5:
-            self.window.next_btn.hide()
-            self.show_save_check()
-
     def save_button_clicked(self):
         """
         Saves the demographics to csv, closes the csv and exits the application
@@ -122,32 +150,6 @@ class MyWizard(QtWidgets.QMainWindow):
         self.csv_db.close()
         sys.exit(app.exec_())
 
-    def refresh_nav_buttons(self):
-        """
-        Refreshs the navigation buttons upon tab clicks to ensure only the
-        relevant buttons are shown
-        """
-        if self.window.tabs.currentIndex() == 0:
-            self.window.save_btn.hide()
-            self.window.back_btn.hide()
-        elif self.window.tabs.currentIndex() == 5:
-            self.show_save_check()
-            self.window.next_btn.hide()
-            self.window.back_btn.show()
-        else:
-            self.window.next_btn.show()
-            self.window.back_btn.show()
-
-
-# loads to info page
-# then consent
-        # then demographics
-        # then task itself (prob needs a submit/reset button)
-        # then debrief
-        # will need a logger
-        # create a history file to support pseudo random blah
-        # qtab widget
-
 app = QtWidgets.QApplication([])
 wizard = MyWizard()
 wizard.setWindowTitle('MyWizard Example')
@@ -155,8 +157,8 @@ wizard.show()
 app.exec_()
 
 # To Do
-# Shift forward/back buttons to bottom
-# move disclaimer to text
-# move intructions to text
-# create the random images and the buttons
-# create a logger
+# write intro text
+# write debrief text
+# write instructions text
+# code randomiser for urn experiment
+# code urn condition dictionary (probably use the random urn selection)
