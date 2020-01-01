@@ -6,6 +6,7 @@ Created on Fri Dec 27 13:23:25 2019
 """
 
 from PyQt5 import QtWidgets, QtCore, uic
+import random
 import sys
 
 class MyWizard(QtWidgets.QMainWindow):
@@ -17,8 +18,8 @@ class MyWizard(QtWidgets.QMainWindow):
         self.window = uic.loadUi('Screen.ui', self)
         self.setWindowTitle('Ellsberg, Pullman and Colman Test')
 
-        # Import the csv 'database'
-        self.csv_db = open('database\\csv_db.csv', 'a')
+        # Open the 'database' tables
+        self.csv_results_db = open('database\\csv_results_db.csv', 'a')
 
         # Import all the text from external sources (simplifies future changes)
         # and set the fill the text boxes (read only to prevent user edits)
@@ -32,22 +33,29 @@ class MyWizard(QtWidgets.QMainWindow):
         self.window.instr_textbox.setText(self.instruction_text)
         self.window.instr_textbox.setReadOnly(True)
 
-#        # The possible screens
-#        self.screens = ['Intro', 'Consent', 'Demographic',
-#                        'Instruction', 'Test', 'Debrief']
-
         # Adjust the combobox content to support the valid values
-        self.window.gender_combobox.addItem("Prefer Not To Say")
-        self.window.gender_combobox.addItem("Female")
-        self.window.gender_combobox.addItem("Male")
-        self.window.gender_combobox.addItem("Other")
-        self.window.edu_combobox.addItem("Prefer Not To Say")
-        self.window.edu_combobox.addItem("High School")
-        self.window.edu_combobox.addItem("Associate's")
-        self.window.edu_combobox.addItem("Bachelor's")
-        self.window.edu_combobox.addItem("Master's")
-        self.window.edu_combobox.addItem("PhD")
-        self.window.edu_combobox.addItem("Other")
+        gender_list = ['', 'Prefer Not To Say', 'Female', 'Male', 'Other']
+        for gender in gender_list:
+            self.window.gender_combobox.addItem(gender)
+        education_list = ['', 'High School', 'Bachelors', 'Masters', 'PhD',
+                          'Other']
+        for education in education_list:
+            self.window.edu_combobox.addItem(education)
+
+        # Set random urn condition (i.e. marble count), distribution
+        # and position
+        self.urn_condition = random.choice([2, 10, 100])
+        if self.urn_condition == 2:
+            dist = ['Blue', 'Blue']
+            random.shuffle(dist)
+        elif self.urn_condition == 10:
+            dist = ['Blue'] * 2 + ['Red'] * 8
+            random.shuffle(dist)
+        else:
+            dist = ['Blue'] * 53 + ['Red'] * 47
+            random.shuffle(dist)
+        self.urn_distribution = dist
+        self.random_urn_position = random.choice([0, 1])  # 1 right, 0 left
 
         # Connect the buttons and tabs to the relevant functions
         self.window.back_btn.clicked.connect(self.back_button_clicked)
@@ -104,12 +112,12 @@ class MyWizard(QtWidgets.QMainWindow):
             self.window.next_btn.show()
             self.window.back_btn.show()
 
-    def is_task_complete(self):
+    def is_task_complete(self,results):
         """
         Checks all activities, demographics etc have been submitted prior to
         allowing the participant to save and exit
         """
-        pass
+        return True
         #  return error for what is not yet submitted
 
     def get_details(self):
@@ -122,9 +130,9 @@ class MyWizard(QtWidgets.QMainWindow):
         age = str(self.window.age_spinbox.value())
         education = str(self.window.edu_combobox.currentText())
         gender = str(self.window.gender_combobox.currentText())
-        urn_condition = str(2)  # 2, 10, 100
-        urn_position = str(0)  # 0 random urn on the right, 1 on the left
-        urn_selected = str(0)  # 0 random urn, 1 50/50 urn
+        urn_condition = str(self.urn_condition)
+        urn_position = str(self.random_urn_position)  # 0 random urn on the right, 1 on the left
+        urn_selected = str(0)  # 0 random urn, 1 50/50 urn ############################  think radio button XOR gate
         marble_received = str('Red')
         return (username + ', ' + consent + ', ' + age + ', ' +
                 education + ', ' + gender + ', ' +
@@ -145,10 +153,12 @@ class MyWizard(QtWidgets.QMainWindow):
         """
         Saves the demographics to csv, closes the csv and exits the application
         """
-        self.csv_db.write((self.get_details()))
-        self.csv_db.write('\n')
-        self.csv_db.close()
-        sys.exit(app.exec_())
+        results = self.get_details()
+        if self.is_task_complete(results):
+            self.csv_results_db.write(results)
+            self.csv_results_db.write('\n')
+            self.csv_results_db.close()
+            sys.exit(app.exec_())
 
 app = QtWidgets.QApplication([])
 wizard = MyWizard()
@@ -160,5 +170,4 @@ app.exec_()
 # write intro text
 # write debrief text
 # write instructions text
-# code randomiser for urn experiment
-# code urn condition dictionary (probably use the random urn selection)
+# code urn
