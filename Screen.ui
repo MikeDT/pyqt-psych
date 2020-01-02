@@ -63,7 +63,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>4</number>
     </property>
     <widget class="QWidget" name="intro">
      <attribute name="title">
@@ -227,7 +227,7 @@
      <attribute name="title">
       <string>Test</string>
      </attribute>
-     <widget class="QRadioButton" name="urn1_radiobutton">
+     <widget class="QRadioButton" name="left_urn_a_radiobutton">
       <property name="geometry">
        <rect>
         <x>250</x>
@@ -237,10 +237,10 @@
        </rect>
       </property>
       <property name="text">
-       <string>Urn 1</string>
+       <string>Urn A</string>
       </property>
      </widget>
-     <widget class="QRadioButton" name="urn2_radiobutton">
+     <widget class="QRadioButton" name="right_urn_b_radiobutton">
       <property name="geometry">
        <rect>
         <x>750</x>
@@ -250,7 +250,50 @@
        </rect>
       </property>
       <property name="text">
-       <string>Urn 2</string>
+       <string>Urn B</string>
+      </property>
+     </widget>
+     <widget class="QTextEdit" name="right_urn_textbox">
+      <property name="geometry">
+       <rect>
+        <x>650</x>
+        <y>250</y>
+        <width>251</width>
+        <height>301</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QTextEdit" name="left_urn_textbox">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>230</y>
+        <width>251</width>
+        <height>301</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QTextEdit" name="marble_result_textbox">
+      <property name="geometry">
+       <rect>
+        <x>350</x>
+        <y>720</y>
+        <width>321</width>
+        <height>31</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="draw_marble_button">
+      <property name="geometry">
+       <rect>
+        <x>470</x>
+        <y>660</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Draw Marble</string>
       </property>
      </widget>
     </widget>

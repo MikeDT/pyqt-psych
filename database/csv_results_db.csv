@@ -1,0 +1,11 @@
+User,Consent_Provided,Age,Education_Level,Gender,Urn_Condition,Run,Marble_Received,Urn_Selected,Random_Urn
+Mike, True, 4, Bachelors, Female, 100, 1, Blue, 1, 1
+Mike, True, 4, Bachelors, Female, 100, 2, Red, 1, 1
+Mike, True, 4, Bachelors, Female, 100, 3, Blue, 1, 1
+Mike, True, 4, Bachelors, Female, 100, 4, Blue, 1, 1
+Mike, True, 4, Bachelors, Female, 100, 5, Red, 1, 1
+Mike, True, 4, Bachelors, Female, 100, 6, Blue, 0, 1
+Mike, True, 4, Bachelors, Female, 100, 7, Red, 0, 1
+Mike, True, 4, Bachelors, Female, 100, 8, Blue, 0, 1
+Mike, True, 4, Bachelors, Female, 100, 9, Red, 0, 1
+Mike, True, 4, Bachelors, Female, 100, 10, Blue, 0, 1

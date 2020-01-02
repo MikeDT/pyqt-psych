@@ -5,9 +5,10 @@ Created on Fri Dec 27 13:23:25 2019
 @author: miketaylor
 """
 
-from PyQt5 import QtWidgets, QtCore, uic
+from PyQt5 import QtWidgets, uic
 import random
 import sys
+
 
 class MyWizard(QtWidgets.QMainWindow):
 
@@ -46,17 +47,35 @@ class MyWizard(QtWidgets.QMainWindow):
         # and position
         self.urn_condition = random.choice([2, 10, 100])
         if self.urn_condition == 2:
-            dist = ['Blue', 'Blue']
-            random.shuffle(dist)
+            random_dist = ['Blue', 'Blue']
+            random.shuffle(random_dist)
+            ff_dist = ['Blue', 'Red']
+            random.shuffle(ff_dist)
         elif self.urn_condition == 10:
-            dist = ['Blue'] * 2 + ['Red'] * 8
-            random.shuffle(dist)
+            random_dist = ['Blue'] * 2 + ['Red'] * 8
+            random.shuffle(random_dist)
+            ff_dist = ['Blue'] * 5 + ['Red'] * 5
+            random.shuffle(ff_dist)
         else:
-            dist = ['Blue'] * 53 + ['Red'] * 47
-            random.shuffle(dist)
-        self.urn_distribution = dist
-        self.random_urn_position = random.choice([0, 1])  # 1 right, 0 left
-
+            random_dist = ['Blue'] * 53 + ['Red'] * 47
+            random.shuffle(random_dist)
+            ff_dist = ['Blue'] * 50 + ['Red'] * 50
+            random.shuffle(ff_dist)
+        self.random_urn_distribution = random_dist
+        self.ff_urn_distribution = ff_dist
+        self.random_urn_draw_count = 0
+        self.ff_urn_draw_count = 0
+        self.results = []
+    
+        self.random_urn_position = random.choice([0, 1])  # 0 left/a, 1 right/b
+        if self.random_urn_position == 0:
+            self.window.left_urn_textbox.setText("Random Urn")
+            self.window.right_urn_textbox.setText("50/50 Urn")
+        else:
+            self.window.left_urn_textbox.setText("50/50 Urn")
+            self.window.right_urn_textbox.setText("Random Urn")
+        self.draw_marble_button.clicked.connect(self.draw_marble_button_clicked)
+            
         # Connect the buttons and tabs to the relevant functions
         self.window.back_btn.clicked.connect(self.back_button_clicked)
         self.window.next_btn.clicked.connect(self.next_button_clicked)
@@ -112,7 +131,7 @@ class MyWizard(QtWidgets.QMainWindow):
             self.window.next_btn.show()
             self.window.back_btn.show()
 
-    def is_task_complete(self,results):
+    def is_task_complete(self, results):
         """
         Checks all activities, demographics etc have been submitted prior to
         allowing the participant to save and exit
@@ -120,24 +139,72 @@ class MyWizard(QtWidgets.QMainWindow):
         return True
         #  return error for what is not yet submitted
 
+    def urn_selected_check(self):
+        if self.window.left_urn_a_radiobutton.isChecked():
+            if self.random_urn_position == 0:
+                urn_selected = 0
+            else:
+                urn_selected = 1
+        elif self.window.right_urn_b_radiobutton.isChecked():
+            if self.random_urn_position == 1:
+                urn_selected = 0
+            else:
+                urn_selected = 1
+        else:
+            urn_selected = None
+        return urn_selected
+
     def get_details(self):
         """
         Get the all the details from the experiment (incl. demographics and
         consent), and cast them into a csv ready string
         """
+
         username = str(self.window.username_textbox.text())
         consent = str(self.window.consent_checkbox.isChecked())
         age = str(self.window.age_spinbox.value())
         education = str(self.window.edu_combobox.currentText())
         gender = str(self.window.gender_combobox.currentText())
         urn_condition = str(self.urn_condition)
-        urn_position = str(self.random_urn_position)  # 0 random urn on the right, 1 on the left
-        urn_selected = str(0)  # 0 random urn, 1 50/50 urn ############################  think radio button XOR gate
-        marble_received = str('Red')
-        return (username + ', ' + consent + ', ' + age + ', ' +
-                education + ', ' + gender + ', ' +
-                urn_condition + ', ' + urn_position + ', ' +
-                urn_selected + ', ' + marble_received)
+        csv_content = []
+        count = 0
+        for result in self.results:
+            csv_content.append((username + ', ' + consent + ', ' + age + ', ' +
+                                education + ', ' + gender + ', ' +
+                                urn_condition + ', ' +
+                                str(self.results[count][0]) + ', ' +  # run
+                                str(self.results[count][1]) + ', ' +  # marble
+                                str(self.results[count][2]) + ', ' +  # urn selected
+                                str(self.results[count][3])))  # random urn pos
+            count += 1
+        return csv_content
+
+    def marble_result(self):
+        """
+        blurb
+        """
+        urn_selected = self.urn_selected_check()
+        if urn_selected is None:
+            return "No urn selected..."
+        else:
+            if (urn_selected == 0 & self.random_urn_position == 0):
+                marble_returned = self.random_urn_distribution[self.random_urn_draw_count]
+                self.random_urn_draw_count += 1    
+            elif (urn_selected == 1 & self.random_urn_position == 1):
+                marble_returned = self.random_urn_distribution[self.random_urn_draw_count]
+                self.random_urn_draw_count += 1
+            else:
+                marble_returned = self.ff_urn_distribution[self.ff_urn_draw_count]
+                self.ff_urn_draw_count += 1
+            run = self.ff_urn_draw_count + self.random_urn_draw_count
+            self.results.append((run, marble_returned,
+                                 urn_selected, self.random_urn_position))
+            return marble_returned
+
+    def draw_marble_button_clicked(self):
+        marble_returned = self.marble_result()
+        self.window.marble_result_textbox.setText(marble_returned)
+        
 
     def show_save_check(self):
         """
@@ -155,10 +222,12 @@ class MyWizard(QtWidgets.QMainWindow):
         """
         results = self.get_details()
         if self.is_task_complete(results):
-            self.csv_results_db.write(results)
-            self.csv_results_db.write('\n')
+            for result in results:
+                self.csv_results_db.write(result)
+                self.csv_results_db.write('\n')
             self.csv_results_db.close()
             sys.exit(app.exec_())
+
 
 app = QtWidgets.QApplication([])
 wizard = MyWizard()
@@ -170,4 +239,4 @@ app.exec_()
 # write intro text
 # write debrief text
 # write instructions text
-# code urn
+# make random selection sequence (i.e. each of the six conditions, rather than the existing random each time)
