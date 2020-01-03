@@ -20,7 +20,7 @@ class MyWizard(QtWidgets.QMainWindow):
         self.ui_file_loc = 'Screen.ui'
         self.intro_text_file_loc = 'text\\Introduction.txt'
         self.disclaimer_text_file_loc = 'text\\Disclaimer.txt'
-        self.instruction_text_file_loc = 'text\\Instructions.txt'
+        self.instruct_text_file_loc = 'text\\Instructions.txt'
 
         # Import the designer UI and name the window
         self.window = uic.loadUi(self.ui_file_loc, self)
@@ -171,10 +171,10 @@ class MyWizard(QtWidgets.QMainWindow):
         self.intro_text = open(self.intro_text_file_loc, 'r').read()
         self.window.intro_textbox.setText(self.intro_text)
         self.window.intro_textbox.setReadOnly(True)
-        self.disclaimer_text = open(self.intro_disclaimer_text_file_loc, 'r').read()
+        self.disclaimer_text = open(self.disclaimer_text_file_loc, 'r').read()
         self.window.disclaimer_textbox.setText(self.disclaimer_text)
         self.window.disclaimer_textbox.setReadOnly(True)
-        self.instruction_text = open(self.instruction_text_file_loc, 'r').read()
+        self.instruction_text = open(self.instruct_text_file_loc, 'r').read()
         self.window.instr_textbox.setText(self.instruction_text)
         self.window.instr_textbox.setReadOnly(True)
 
@@ -281,20 +281,28 @@ class MyWizard(QtWidgets.QMainWindow):
         urn_selected = self.urn_selected_check()
         if urn_selected is None:
             return "No urn selected..."
-        else:
-            if (urn_selected == 0 & self.random_urn_position == 0):
+        if (urn_selected == 0 & self.random_urn_position == 0):
+            if self.random_urn_draw_count >= len(self.random_urn_distribution):
+                marble_returned = "no more marbles in the urn1" + str (self.random_urn_draw_count) + str(  len(self.random_urn_distribution))
+            else:
                 marble_returned = self.random_urn_distribution[self.random_urn_draw_count]
                 self.random_urn_draw_count += 1    
-            elif (urn_selected == 1 & self.random_urn_position == 1):
+        elif (urn_selected == 1 & self.random_urn_position == 1):
+            if self.random_urn_draw_count >= len(self.random_urn_distribution):
+                marble_returned = "no more marbles in the urn2" + str (self.random_urn_draw_count) + str(  len(self.random_urn_distribution))
+            else:
                 marble_returned = self.random_urn_distribution[self.random_urn_draw_count]
                 self.random_urn_draw_count += 1
+        else:
+            if self.ff_urn_draw_count >= len(self.ff_urn_distribution):
+                marble_returned = "no more marbles in the urn3" + str (self.ff_urn_draw_count) + str(  len(self.ff_urn_distribution))
             else:
                 marble_returned = self.ff_urn_distribution[self.ff_urn_draw_count]
                 self.ff_urn_draw_count += 1
-            run = self.ff_urn_draw_count + self.random_urn_draw_count
-            self.results.append((run, marble_returned,
-                                 urn_selected, self.random_urn_position))
-            return marble_returned
+        run = self.ff_urn_draw_count + self.random_urn_draw_count
+        self.results.append((run, marble_returned,
+                             urn_selected, self.random_urn_position))
+        return marble_returned
 
     def draw_marble_button_clicked(self):
         """
@@ -340,5 +348,4 @@ app.exec_()
 # write intro text
 # write debrief text
 # write instructions text
-# make random selection sequence (i.e. each of the six conditions, rather than the existing random each time)
-# resolve the empty urn issue (give a message rather than allowing an internal error)
+# resolve the empty urn issue (give a message rather than allowing an internal error) < -- broken atm
