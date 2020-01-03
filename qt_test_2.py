@@ -15,37 +15,70 @@ class MyWizard(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # File locations
+        self.condition_combo_file_loc = 'condition_combo_file.txt'
+        self.ui_file_loc = 'Screen.ui'
+        self.intro_text_file_loc = 'text\\Introduction.txt'
+        self.disclaimer_text_file_loc = 'text\\Disclaimer.txt'
+        self.instruction_text_file_loc = 'text\\Instructions.txt'
+
         # Import the designer UI and name the window
-        self.window = uic.loadUi('Screen.ui', self)
+        self.window = uic.loadUi(self.ui_file_loc, self)
         self.setWindowTitle('Ellsberg, Pullman and Colman Test')
 
-        # Open the 'database' tables
+        # Open the 'database' table, set relevant file loc
         self.csv_results_db = open('database\\csv_results_db.csv', 'a')
 
         # Import all the text from external sources (simplifies future changes)
         # and set the fill the text boxes (read only to prevent user edits)
-        self.intro_text = open('text\\' + 'Introduction.txt', 'r').read()
-        self.window.intro_textbox.setText(self.intro_text)
-        self.window.intro_textbox.setReadOnly(True)
-        self.disclaimer_text = open('text\\' + 'Disclaimer.txt', 'r').read()
-        self.window.disclaimer_textbox.setText(self.disclaimer_text)
-        self.window.disclaimer_textbox.setReadOnly(True)
-        self.instruction_text = open('text\\' + 'Instructions.txt', 'r').read()
-        self.window.instr_textbox.setText(self.instruction_text)
-        self.window.instr_textbox.setReadOnly(True)
+        self.get_set_text()
 
         # Adjust the combobox content to support the valid values
-        gender_list = ['', 'Prefer Not To Say', 'Female', 'Male', 'Other']
-        for gender in gender_list:
-            self.window.gender_combobox.addItem(gender)
-        education_list = ['', 'High School', 'Bachelors', 'Masters', 'PhD',
-                          'Other']
-        for education in education_list:
-            self.window.edu_combobox.addItem(education)
-
+        self.set_gender_types()
+        self.set_edu_types()
+        
         # Set random urn condition (i.e. marble count), distribution
         # and position
-        self.urn_condition = random.choice([2, 10, 100])
+        self.random_urn_position, self.urn_condition = self.get_random_partic_cond() 
+        self.set_urn_random_dist()
+        self.random_urn_draw_count = 0
+        self.ff_urn_draw_count = 0
+        self.results = []
+        self.set_random_urn()
+#        self.random_urn_position = random.choice([0, 1])  # 0 left/a, 1 right/b       
+#        self.urn_condition = random.choice([2, 10, 100])
+
+        # Connect the buttons and tabs to the relevant functions
+        self.window.back_btn.clicked.connect(self.back_button_clicked)
+        self.window.next_btn.clicked.connect(self.next_button_clicked)
+        self.window.save_btn.clicked.connect(self.save_button_clicked)
+        self.window.tabs.currentChanged.connect(self.refresh_nav_buttons)
+
+        # Set the default visibility for the nav buttons and show the screen
+        self.window.back_btn.hide()
+        self.window.save_btn.hide()
+        self.window.show()
+
+    def set_random_urn(self):
+        """
+        Sets the urn that is random (i.e. not 50/50) 
+        """
+        if self.random_urn_position == 0:
+            self.window.left_urn_textbox.setText("Random Urn")
+            self.window.right_urn_textbox.setText("50/50 Urn")
+        else:
+            self.window.left_urn_textbox.setText("50/50 Urn")
+            self.window.right_urn_textbox.setText("Random Urn")
+        self.draw_marble_button.clicked.connect(self.draw_marble_button_clicked)
+
+    def set_urn_random_dist(self):
+        """
+        Sets the random distribution of the urn, using the ratios in the
+        original paper and the random.shuffle function to randomise the
+        outcome (random seeds were not used owing to the need to make it
+        random per participant, but could be used, and iterated to support
+        improved reproducibility)
+        """
         if self.urn_condition == 2:
             random_dist = ['Blue', 'Blue']
             random.shuffle(random_dist)
@@ -60,32 +93,90 @@ class MyWizard(QtWidgets.QMainWindow):
             random_dist = ['Blue'] * 53 + ['Red'] * 47
             random.shuffle(random_dist)
             ff_dist = ['Blue'] * 50 + ['Red'] * 50
-            random.shuffle(ff_dist)
+            random.shuffle(ff_dist)       
         self.random_urn_distribution = random_dist
         self.ff_urn_distribution = ff_dist
-        self.random_urn_draw_count = 0
-        self.ff_urn_draw_count = 0
-        self.results = []
-    
-        self.random_urn_position = random.choice([0, 1])  # 0 left/a, 1 right/b
-        if self.random_urn_position == 0:
-            self.window.left_urn_textbox.setText("Random Urn")
-            self.window.right_urn_textbox.setText("50/50 Urn")
-        else:
-            self.window.left_urn_textbox.setText("50/50 Urn")
-            self.window.right_urn_textbox.setText("Random Urn")
-        self.draw_marble_button.clicked.connect(self.draw_marble_button_clicked)
-            
-        # Connect the buttons and tabs to the relevant functions
-        self.window.back_btn.clicked.connect(self.back_button_clicked)
-        self.window.next_btn.clicked.connect(self.next_button_clicked)
-        self.window.save_btn.clicked.connect(self.save_button_clicked)
-        self.window.tabs.currentChanged.connect(self.refresh_nav_buttons)
 
-        # Set the default conditions for the nav buttons and show the screen
-        self.window.back_btn.hide()
-        self.window.save_btn.hide()
-        self.window.show()
+    def set_gender_types(self):
+        """
+        Sets the gender types for the combobox.  PResumed to be relatively
+        static, but could be altered to support imports for more non-code
+        adjustability
+        """
+        gender_list = ['', 'Prefer Not To Say', 'Female', 'Male', 'Other']
+        for gender in gender_list:
+            self.window.gender_combobox.addItem(gender)
+    
+    def set_edu_types(self):
+        """
+        Sets the education types for the combobox.  PResumed to be relatively
+        static, but could be altered to support imports for more non-code
+        adjustability
+        """
+        education_list = ['', 'High School', 'Bachelors', 'Masters', 'PhD',
+                          'Other']
+        for education in education_list:
+            self.window.edu_combobox.addItem(education)
+
+    def get_random_partic_cond(self):
+        """
+        Gets the random conditions per particpant, with the combination of
+        urn position and urn marble count resulting in 6 differnt participant
+        conditions. First an attempt to import the prioir history is made
+        if no prioir history is available a new randomised list is created
+        with the condition tuples.  If history is available, then the top most
+        condition tuple is read and returned as a tuple.  Iteration of the list
+        only occurs after the particpant saves (see set_next_partic_cond())
+        to prevent loss of a condition (and unbalance of the data) owing to 
+        a ui failure or partipant abandoini
+        """
+        condition_combo_file = open(self.condition_combo_file_loc, 'r')
+        if condition_combo_file.readline() == '':
+            self.condition_combo_lst = [(0, 2), (0, 10), (0, 100),
+                                   (1, 2), (1, 10), (1, 100)]
+            random.shuffle(self.condition_combo_lst)
+            condition_combo_file.close()
+            print('file deemed empty, new combo list created',
+                  self.condition_combo_lst)
+        else:
+            self.condition_combo_lst = []
+            condition_combo_file.close()
+            condition_combo_file = open(self.condition_combo_file_loc, 'r')
+            lines = condition_combo_file.readlines()
+            for line in lines:
+                combo = line.strip('\n').strip('(').strip(')').split(',')
+                combo = (int(combo[0]), int(combo[1]))
+                self.condition_combo_lst.append(combo)
+            print('old combo list read', self.condition_combo_lst)
+        condition_combo_file.close()
+        return(self.condition_combo_lst[0])
+  
+    def set_next_partic_cond(self):
+        """
+        Sets the condition combination file with all but the current condition
+        supporting the randomised (but balanced) approach for participant 
+        conditions
+        """
+        condition_combo_file = open(self.condition_combo_file_loc, 'w')
+        for combo in self.condition_combo_lst[1:]:
+            condition_combo_file.write(str(combo) + '\n')
+            print('new combo entry created', combo)
+        condition_combo_file.close()
+
+    def get_set_text(self):
+        """
+        Gets the text from the file locations and embeds it into the gui
+        text boxs (made read only to prevent user edits)
+        """
+        self.intro_text = open(self.intro_text_file_loc, 'r').read()
+        self.window.intro_textbox.setText(self.intro_text)
+        self.window.intro_textbox.setReadOnly(True)
+        self.disclaimer_text = open(self.intro_disclaimer_text_file_loc, 'r').read()
+        self.window.disclaimer_textbox.setText(self.disclaimer_text)
+        self.window.disclaimer_textbox.setReadOnly(True)
+        self.instruction_text = open(self.instruction_text_file_loc, 'r').read()
+        self.window.instr_textbox.setText(self.instruction_text)
+        self.window.instr_textbox.setReadOnly(True)
 
     def back_button_clicked(self):
         """
@@ -140,6 +231,10 @@ class MyWizard(QtWidgets.QMainWindow):
         #  return error for what is not yet submitted
 
     def urn_selected_check(self):
+        """
+        Selects which urn (i.e. random of fifty fifty/ff), is selected
+        when a users selects a radio button
+        """
         if self.window.left_urn_a_radiobutton.isChecked():
             if self.random_urn_position == 0:
                 urn_selected = 0
@@ -159,7 +254,6 @@ class MyWizard(QtWidgets.QMainWindow):
         Get the all the details from the experiment (incl. demographics and
         consent), and cast them into a csv ready string
         """
-
         username = str(self.window.username_textbox.text())
         consent = str(self.window.consent_checkbox.isChecked())
         age = str(self.window.age_spinbox.value())
@@ -181,7 +275,8 @@ class MyWizard(QtWidgets.QMainWindow):
 
     def marble_result(self):
         """
-        blurb
+        Checks the marble returned from the given urn based upon the shuffled
+        marble distribution for the fifty fifty (ff) and random urns
         """
         urn_selected = self.urn_selected_check()
         if urn_selected is None:
@@ -202,6 +297,10 @@ class MyWizard(QtWidgets.QMainWindow):
             return marble_returned
 
     def draw_marble_button_clicked(self):
+        """
+        Updates the screen with the resultant marble when the draw marble
+        button is clicked
+        """
         marble_returned = self.marble_result()
         self.window.marble_result_textbox.setText(marble_returned)
         
@@ -218,7 +317,8 @@ class MyWizard(QtWidgets.QMainWindow):
 
     def save_button_clicked(self):
         """
-        Saves the demographics to csv, closes the csv and exits the application
+        Saves the demographics to csv, closes the csv, sets the remaining
+        random conditions in the batch and exits the application 
         """
         results = self.get_details()
         if self.is_task_complete(results):
@@ -226,6 +326,7 @@ class MyWizard(QtWidgets.QMainWindow):
                 self.csv_results_db.write(result)
                 self.csv_results_db.write('\n')
             self.csv_results_db.close()
+            self.set_next_partic_cond()
             sys.exit(app.exec_())
 
 
@@ -240,3 +341,4 @@ app.exec_()
 # write debrief text
 # write instructions text
 # make random selection sequence (i.e. each of the six conditions, rather than the existing random each time)
+# resolve the empty urn issue (give a message rather than allowing an internal error)
