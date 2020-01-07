@@ -1,2 +1,9 @@
-<b>Instructions</b><br/>
-Blurb
+On the following screen there are two (virtual) urns, labeled A and B, containing red and blue marbles, and you have to draw a marble from one of the urns by selected an urn and clicking the 'Draw Marble' button.
+
+If you get a blue marble, you will be entered into a £30 lottery draw.
+
+Urn A contains red_marble_count_5050 red marbles and blue_marble_count_5050 blue marbles. Urn B contains total_marbles marbles in an unknown color ratio, from total_marbles red marbles and 0 blue marbles to 0 red marbles and total_marbles blue marbles. 
+
+The mixture of red and blue marbles in Urn B has been decided randomly by the program. The number chosen by the program was used to determine the number of blue marbles to be put into Urn B, but you do not know the number. Every possible mixture of red and blue marbles in Urn B is equally likely. 
+
+You have to decide whether you prefer to draw a marble at random from Urn A or Urn B. What you hope is to draw a blue marble and be entered for the £30 lottery draw. Consider very carefully from which urn you prefer to draw the marble, then write down your decision below. You will draw a marble from your chosen urn straight afterwards

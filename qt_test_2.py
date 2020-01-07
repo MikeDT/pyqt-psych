@@ -29,24 +29,19 @@ class MyWizard(QtWidgets.QMainWindow):
         # Open the 'database' table, set relevant file loc
         self.csv_results_db = open('database\\csv_results_db.csv', 'a')
 
-        # Import all the text from external sources (simplifies future changes)
-        # and set the fill the text boxes (read only to prevent user edits)
-        self.get_set_text()
-
         # Adjust the combobox content to support the valid values
         self.set_gender_types()
         self.set_edu_types()
-        
+
         # Set random urn condition (i.e. marble count), distribution
         # and position
         self.random_urn_position, self.urn_condition = self.get_random_partic_cond() 
-        self.set_urn_random_dist()
         self.random_urn_draw_count = 0
         self.ff_urn_draw_count = 0
+        self.max_trials = 2
         self.results = []
         self.set_random_urn()
-#        self.random_urn_position = random.choice([0, 1])  # 0 left/a, 1 right/b       
-#        self.urn_condition = random.choice([2, 10, 100])
+        self.set_urn_random_dist()
 
         # Connect the buttons and tabs to the relevant functions
         self.window.back_btn.clicked.connect(self.back_button_clicked)
@@ -54,14 +49,20 @@ class MyWizard(QtWidgets.QMainWindow):
         self.window.save_btn.clicked.connect(self.save_button_clicked)
         self.window.tabs.currentChanged.connect(self.refresh_nav_buttons)
 
+        # Import all the text from external sources (simplifies future changes)
+        # and set the fill the text boxes (read only to prevent user edits)
+        self.get_set_text()
+
         # Set the default visibility for the nav buttons and show the screen
         self.window.back_btn.hide()
         self.window.save_btn.hide()
         self.window.show()
 
+
+
     def set_random_urn(self):
         """
-        Sets the urn that is random (i.e. not 50/50) 
+        Sets the urn that is random (i.e. not 50/50)
         """
         if self.random_urn_position == 0:
             self.window.left_urn_textbox.setText("Random Urn")
@@ -84,19 +85,29 @@ class MyWizard(QtWidgets.QMainWindow):
             random.shuffle(random_dist)
             ff_dist = ['Blue', 'Red']
             random.shuffle(ff_dist)
+            self.red_marbles_ff = 1
+            self.blue_marbles_ff = 1
+            self.all_marbles = 2
         elif self.urn_condition == 10:
             random_dist = ['Blue'] * 2 + ['Red'] * 8
             random.shuffle(random_dist)
             ff_dist = ['Blue'] * 5 + ['Red'] * 5
             random.shuffle(ff_dist)
+            self.red_marbles_ff = 5
+            self.blue_marbles_ff = 5
+            self.all_marbles = 10
         else:
             random_dist = ['Blue'] * 53 + ['Red'] * 47
             random.shuffle(random_dist)
             ff_dist = ['Blue'] * 50 + ['Red'] * 50
-            random.shuffle(ff_dist)       
+            random.shuffle(ff_dist)
+            self.red_marbles_ff = 50
+            self.blue_marbles_ff = 50
+            self.all_marbles = 100
         self.random_urn_distribution = random_dist
         self.ff_urn_distribution = ff_dist
-
+        print ('marbles: ',self.red_marbles_ff, self.blue_marbles_ff, self.all_marbles)
+        
     def set_gender_types(self):
         """
         Sets the gender types for the combobox.  PResumed to be relatively
@@ -106,10 +117,10 @@ class MyWizard(QtWidgets.QMainWindow):
         gender_list = ['', 'Prefer Not To Say', 'Female', 'Male', 'Other']
         for gender in gender_list:
             self.window.gender_combobox.addItem(gender)
-    
+
     def set_edu_types(self):
         """
-        Sets the education types for the combobox.  PResumed to be relatively
+        Sets the education types for the combobox.  Presumed to be relatively
         static, but could be altered to support imports for more non-code
         adjustability
         """
@@ -127,13 +138,13 @@ class MyWizard(QtWidgets.QMainWindow):
         with the condition tuples.  If history is available, then the top most
         condition tuple is read and returned as a tuple.  Iteration of the list
         only occurs after the particpant saves (see set_next_partic_cond())
-        to prevent loss of a condition (and unbalance of the data) owing to 
+        to prevent loss of a condition (and unbalance of the data) owing to
         a ui failure or partipant abandoini
         """
         condition_combo_file = open(self.condition_combo_file_loc, 'r')
         if condition_combo_file.readline() == '':
             self.condition_combo_lst = [(0, 2), (0, 10), (0, 100),
-                                   (1, 2), (1, 10), (1, 100)]
+                                        (1, 2), (1, 10), (1, 100)]
             random.shuffle(self.condition_combo_lst)
             condition_combo_file.close()
             print('file deemed empty, new combo list created',
@@ -150,11 +161,11 @@ class MyWizard(QtWidgets.QMainWindow):
             print('old combo list read', self.condition_combo_lst)
         condition_combo_file.close()
         return(self.condition_combo_lst[0])
-  
+
     def set_next_partic_cond(self):
         """
         Sets the condition combination file with all but the current condition
-        supporting the randomised (but balanced) approach for participant 
+        supporting the randomised (but balanced) approach for participant
         conditions
         """
         condition_combo_file = open(self.condition_combo_file_loc, 'w')
@@ -162,21 +173,6 @@ class MyWizard(QtWidgets.QMainWindow):
             condition_combo_file.write(str(combo) + '\n')
             print('new combo entry created', combo)
         condition_combo_file.close()
-
-    def get_set_text(self):
-        """
-        Gets the text from the file locations and embeds it into the gui
-        text boxs (made read only to prevent user edits)
-        """
-        self.intro_text = open(self.intro_text_file_loc, 'r').read()
-        self.window.intro_textbox.setText(self.intro_text)
-        self.window.intro_textbox.setReadOnly(True)
-        self.disclaimer_text = open(self.disclaimer_text_file_loc, 'r').read()
-        self.window.disclaimer_textbox.setText(self.disclaimer_text)
-        self.window.disclaimer_textbox.setReadOnly(True)
-        self.instruction_text = open(self.instruct_text_file_loc, 'r').read()
-        self.window.instr_textbox.setText(self.instruction_text)
-        self.window.instr_textbox.setReadOnly(True)
 
     def back_button_clicked(self):
         """
@@ -237,14 +233,14 @@ class MyWizard(QtWidgets.QMainWindow):
         """
         if self.window.left_urn_a_radiobutton.isChecked():
             if self.random_urn_position == 0:
-                urn_selected = 0
+                urn_selected = 1  # random
             else:
-                urn_selected = 1
+                urn_selected = 0  # fifty fifty
         elif self.window.right_urn_b_radiobutton.isChecked():
             if self.random_urn_position == 1:
-                urn_selected = 0
+                urn_selected = 1  # random
             else:
-                urn_selected = 1
+                urn_selected = 0  # fifty fifty
         else:
             urn_selected = None
         return urn_selected
@@ -268,7 +264,7 @@ class MyWizard(QtWidgets.QMainWindow):
                                 urn_condition + ', ' +
                                 str(self.results[count][0]) + ', ' +  # run
                                 str(self.results[count][1]) + ', ' +  # marble
-                                str(self.results[count][2]) + ', ' +  # urn selected
+                                str(self.results[count][2]) + ', ' +  # urn
                                 str(self.results[count][3])))  # random urn pos
             count += 1
         return csv_content
@@ -279,28 +275,31 @@ class MyWizard(QtWidgets.QMainWindow):
         marble distribution for the fifty fifty (ff) and random urns
         """
         urn_selected = self.urn_selected_check()
+        trial = self.ff_urn_draw_count + self.random_urn_draw_count
         if urn_selected is None:
             return "No urn selected..."
-        if (urn_selected == 0 & self.random_urn_position == 0):
+        if trial >= self.max_trials:
+            return 'No more draws allowed, the experiment is over'
+        if ((urn_selected == 0) & (self.random_urn_position == 0)) or \
+           ((urn_selected == 1) & (self.random_urn_position == 1)):
             if self.random_urn_draw_count >= len(self.random_urn_distribution):
-                marble_returned = "no more marbles in the urn1" + str (self.random_urn_draw_count) + str(  len(self.random_urn_distribution))
+                marble_returned = 'The urn selected is now empty'
             else:
-                marble_returned = self.random_urn_distribution[self.random_urn_draw_count]
-                self.random_urn_draw_count += 1    
-        elif (urn_selected == 1 & self.random_urn_position == 1):
-            if self.random_urn_draw_count >= len(self.random_urn_distribution):
-                marble_returned = "no more marbles in the urn2" + str (self.random_urn_draw_count) + str(  len(self.random_urn_distribution))
-            else:
-                marble_returned = self.random_urn_distribution[self.random_urn_draw_count]
+                index = self.random_urn_draw_count
+                marble_returned = self.random_urn_distribution[index]
                 self.random_urn_draw_count += 1
-        else:
+#                print('random draw count: ', self.random_urn_draw_count)
+        elif ((urn_selected == 1) & (self.random_urn_position == 0)) or \
+             ((urn_selected == 0) & (self.random_urn_position == 1)):
             if self.ff_urn_draw_count >= len(self.ff_urn_distribution):
-                marble_returned = "no more marbles in the urn3" + str (self.ff_urn_draw_count) + str(  len(self.ff_urn_distribution))
+                marble_returned = 'The urn selected is now empty'
             else:
-                marble_returned = self.ff_urn_distribution[self.ff_urn_draw_count]
+                index = self.ff_urn_draw_count
+                marble_returned = self.ff_urn_distribution[index]
                 self.ff_urn_draw_count += 1
-        run = self.ff_urn_draw_count + self.random_urn_draw_count
-        self.results.append((run, marble_returned,
+#                print('5050 draw count: ', self.ff_urn_draw_count)
+
+        self.results.append((trial, marble_returned,
                              urn_selected, self.random_urn_position))
         return marble_returned
 
@@ -311,7 +310,6 @@ class MyWizard(QtWidgets.QMainWindow):
         """
         marble_returned = self.marble_result()
         self.window.marble_result_textbox.setText(marble_returned)
-        
 
     def show_save_check(self):
         """
@@ -326,7 +324,7 @@ class MyWizard(QtWidgets.QMainWindow):
     def save_button_clicked(self):
         """
         Saves the demographics to csv, closes the csv, sets the remaining
-        random conditions in the batch and exits the application 
+        random conditions in the batch and exits the application
         """
         results = self.get_details()
         if self.is_task_complete(results):
@@ -338,6 +336,30 @@ class MyWizard(QtWidgets.QMainWindow):
             sys.exit(app.exec_())
 
 
+    def get_set_text(self):
+        """
+        Gets the text from the file locations and embeds it into the gui
+        text boxs (made read only to prevent user edits)
+        """
+        self.intro_text = open(self.intro_text_file_loc, 'r').read()
+        self.window.intro_textbox.setText(self.intro_text)
+        self.window.intro_textbox.setReadOnly(True)
+        self.disclaimer_text = open(self.disclaimer_text_file_loc, 'r').read()
+        self.window.disclaimer_textbox.setText(self.disclaimer_text)
+        self.window.disclaimer_textbox.setReadOnly(True)
+        self.instruction_text = open(self.instruct_text_file_loc, 'r').read()
+        self.instruction_text = self.instruction_text.replace(
+                                  'red_marble_count_5050',
+                                  str(self.red_marbles_ff))
+        self.instruction_text = self.instruction_text.replace(
+                                  'blue_marble_count_5050',
+                                  str(self.blue_marbles_ff))
+        self.instruction_text = self.instruction_text.replace(
+                                  'total_marbles',
+                                  str(self.all_marbles))
+        self.window.instr_textbox.setText(self.instruction_text)
+        self.window.instr_textbox.setReadOnly(True)
+
 app = QtWidgets.QApplication([])
 wizard = MyWizard()
 wizard.setWindowTitle('MyWizard Example')
@@ -347,5 +369,4 @@ app.exec_()
 # To Do
 # write intro text
 # write debrief text
-# write instructions text
-# resolve the empty urn issue (give a message rather than allowing an internal error) < -- broken atm
+
