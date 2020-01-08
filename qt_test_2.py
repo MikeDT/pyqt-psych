@@ -16,8 +16,11 @@ class MyWizard(QtWidgets.QMainWindow):
         super().__init__(*args, **kwargs)
 
         # File locations
-        self.condition_combo_file_loc = 'condition_combo_file.txt'
-        self.ui_file_loc = 'Screen.ui'
+        self.condition_combo_dynamic_loc = \
+            'current_state\\condition_combo_file_dynamic.txt'
+        self.condition_combo_master_loc = \
+            'config\\condition_combo_file_master.txt'
+        self.ui_file_loc = 'ui\\Screen.ui'
         self.intro_text_file_loc = 'text\\Introduction.txt'
         self.disclaimer_text_file_loc = 'text\\Disclaimer.txt'
         self.instruct_text_file_loc = 'text\\Instructions.txt'
@@ -27,7 +30,7 @@ class MyWizard(QtWidgets.QMainWindow):
         self.setWindowTitle('Ellsberg, Pullman and Colman Test')
 
         # Open the 'database' table, set relevant file loc
-        self.csv_results_db = open('database\\csv_results_db.csv', 'a')
+        self.csv_results_db = open('results\\csv_results_db.csv', 'a')
 
         # Adjust the combobox content to support the valid values
         self.set_gender_types()
@@ -35,7 +38,10 @@ class MyWizard(QtWidgets.QMainWindow):
 
         # Set random urn condition (i.e. marble count), distribution
         # and position
-        self.random_urn_position, self.urn_condition = self.get_random_partic_cond() 
+        (self.random_urn_position,
+         self.urn_condition,
+         self.red_marbles_rand,
+         self.blue_marbles_rand) = self.get_random_partic_cond()
         self.random_urn_draw_count = 0
         self.ff_urn_draw_count = 0
         self.max_trials = 2
@@ -58,8 +64,6 @@ class MyWizard(QtWidgets.QMainWindow):
         self.window.save_btn.hide()
         self.window.show()
 
-
-
     def set_random_urn(self):
         """
         Sets the urn that is random (i.e. not 50/50)
@@ -70,7 +74,8 @@ class MyWizard(QtWidgets.QMainWindow):
         else:
             self.window.left_urn_textbox.setText("50/50 Urn")
             self.window.right_urn_textbox.setText("Random Urn")
-        self.draw_marble_button.clicked.connect(self.draw_marble_button_clicked)
+        self.draw_marble_button.clicked.connect(
+          self.draw_marble_button_clicked)
 
     def set_urn_random_dist(self):
         """
@@ -80,37 +85,24 @@ class MyWizard(QtWidgets.QMainWindow):
         random per participant, but could be used, and iterated to support
         improved reproducibility)
         """
-        if self.urn_condition == 2:
-            random_dist = ['Blue', 'Blue']
-            random.shuffle(random_dist)
-            ff_dist = ['Blue', 'Red']
-            random.shuffle(ff_dist)
-            self.red_marbles_ff = 1
-            self.blue_marbles_ff = 1
-            self.all_marbles = 2
-        elif self.urn_condition == 10:
-            random_dist = ['Blue'] * 2 + ['Red'] * 8
-            random.shuffle(random_dist)
-            ff_dist = ['Blue'] * 5 + ['Red'] * 5
-            random.shuffle(ff_dist)
-            self.red_marbles_ff = 5
-            self.blue_marbles_ff = 5
-            self.all_marbles = 10
-        else:
-            random_dist = ['Blue'] * 53 + ['Red'] * 47
-            random.shuffle(random_dist)
-            ff_dist = ['Blue'] * 50 + ['Red'] * 50
-            random.shuffle(ff_dist)
-            self.red_marbles_ff = 50
-            self.blue_marbles_ff = 50
-            self.all_marbles = 100
+        self.red_marbles_ff = int(self.urn_condition/2)
+        self.blue_marbles_ff = int(self.urn_condition/2)
+        self.all_marbles = self.urn_condition
+        if self.blue_marbles_rand + self.red_marbles_rand != self.all_marbles:
+            print('''Warning, distribution not correct, blue marble count plus
+                  red marble count does not match the urn size''')
+        random_dist = (['Blue'] * self.blue_marbles_rand +
+                       ['Red'] * self.red_marbles_rand)
+        ff_dist = (['Blue'] * self.blue_marbles_ff +
+                   ['Red'] * self.red_marbles_ff)
+        random.shuffle(random_dist)
+        random.shuffle(ff_dist)
         self.random_urn_distribution = random_dist
         self.ff_urn_distribution = ff_dist
-        print ('marbles: ',self.red_marbles_ff, self.blue_marbles_ff, self.all_marbles)
-        
+
     def set_gender_types(self):
         """
-        Sets the gender types for the combobox.  PResumed to be relatively
+        Sets the gender types for the combobox.  Presumed to be relatively
         static, but could be altered to support imports for more non-code
         adjustability
         """
@@ -129,6 +121,22 @@ class MyWizard(QtWidgets.QMainWindow):
         for education in education_list:
             self.window.edu_combobox.addItem(education)
 
+    def get_read_cond_all(self, condition_combo_file):
+        """
+        Reads either the master condition list or the list that is stored per
+        trial and updates teh MyWizard class with the current conditions
+        and the remaining future conditions in the condition_combo_lst
+        """
+        self.condition_combo_lst = []
+        lines = condition_combo_file.readlines()
+        for line in lines:
+            combo = line.strip('\n').strip('(').strip(')').split(',')
+            combo = (int(combo[0]),
+                     int(combo[1]),
+                     int(combo[2]),
+                     int(combo[3]),)
+            self.condition_combo_lst.append(combo)
+
     def get_random_partic_cond(self):
         """
         Gets the random conditions per particpant, with the combination of
@@ -141,25 +149,21 @@ class MyWizard(QtWidgets.QMainWindow):
         to prevent loss of a condition (and unbalance of the data) owing to
         a ui failure or partipant abandoini
         """
-        condition_combo_file = open(self.condition_combo_file_loc, 'r')
+        condition_combo_file = open(self.condition_combo_dynamic_loc, 'r')
         if condition_combo_file.readline() == '':
-            self.condition_combo_lst = [(0, 2), (0, 10), (0, 100),
-                                        (1, 2), (1, 10), (1, 100)]
-            random.shuffle(self.condition_combo_lst)
             condition_combo_file.close()
-            print('file deemed empty, new combo list created',
+            condition_combo_file = open(self.condition_combo_master_loc, 'r')
+            self.get_read_cond_all(condition_combo_file)
+            condition_combo_file.close()
+            print('new combo list created from master - ',
                   self.condition_combo_lst)
         else:
-            self.condition_combo_lst = []
             condition_combo_file.close()
-            condition_combo_file = open(self.condition_combo_file_loc, 'r')
-            lines = condition_combo_file.readlines()
-            for line in lines:
-                combo = line.strip('\n').strip('(').strip(')').split(',')
-                combo = (int(combo[0]), int(combo[1]))
-                self.condition_combo_lst.append(combo)
-            print('old combo list read', self.condition_combo_lst)
-        condition_combo_file.close()
+            condition_combo_file = open(self.condition_combo_dynamic_loc, 'r')
+            self.get_read_cond_all(condition_combo_file)
+            condition_combo_file.close()
+            print('old combo list read from drive - ',
+                  self.condition_combo_lst)
         return(self.condition_combo_lst[0])
 
     def set_next_partic_cond(self):
@@ -168,7 +172,7 @@ class MyWizard(QtWidgets.QMainWindow):
         supporting the randomised (but balanced) approach for participant
         conditions
         """
-        condition_combo_file = open(self.condition_combo_file_loc, 'w')
+        condition_combo_file = open(self.condition_combo_dynamic_loc, 'w')
         for combo in self.condition_combo_lst[1:]:
             condition_combo_file.write(str(combo) + '\n')
             print('new combo entry created', combo)
@@ -288,7 +292,6 @@ class MyWizard(QtWidgets.QMainWindow):
                 index = self.random_urn_draw_count
                 marble_returned = self.random_urn_distribution[index]
                 self.random_urn_draw_count += 1
-#                print('random draw count: ', self.random_urn_draw_count)
         elif ((urn_selected == 1) & (self.random_urn_position == 0)) or \
              ((urn_selected == 0) & (self.random_urn_position == 1)):
             if self.ff_urn_draw_count >= len(self.ff_urn_distribution):
@@ -297,8 +300,6 @@ class MyWizard(QtWidgets.QMainWindow):
                 index = self.ff_urn_draw_count
                 marble_returned = self.ff_urn_distribution[index]
                 self.ff_urn_draw_count += 1
-#                print('5050 draw count: ', self.ff_urn_draw_count)
-
         self.results.append((trial, marble_returned,
                              urn_selected, self.random_urn_position))
         return marble_returned
@@ -335,7 +336,6 @@ class MyWizard(QtWidgets.QMainWindow):
             self.set_next_partic_cond()
             sys.exit(app.exec_())
 
-
     def get_set_text(self):
         """
         Gets the text from the file locations and embeds it into the gui
@@ -360,6 +360,7 @@ class MyWizard(QtWidgets.QMainWindow):
         self.window.instr_textbox.setText(self.instruction_text)
         self.window.instr_textbox.setReadOnly(True)
 
+
 app = QtWidgets.QApplication([])
 wizard = MyWizard()
 wizard.setWindowTitle('MyWizard Example')
@@ -369,4 +370,6 @@ app.exec_()
 # To Do
 # write intro text
 # write debrief text
-
+# add images (and image loc, maybe generate auto via matplotlib, probably easiest)
+# sort task complete check
+# sort navigation beyond consent screen (bounce back)
