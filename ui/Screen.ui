@@ -63,7 +63,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="intro">
      <attribute name="title">
@@ -76,6 +76,39 @@
         <y>0</y>
         <width>1081</width>
         <height>781</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>18</pointsize>
+       </font>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="disclaimer">
+     <attribute name="title">
+      <string>Disclaimer</string>
+     </attribute>
+     <widget class="QCheckBox" name="consent_checkbox">
+      <property name="geometry">
+       <rect>
+        <x>620</x>
+        <y>760</y>
+        <width>461</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>I confirm my consent to the test and for my data to be stored and processed</string>
+      </property>
+     </widget>
+     <widget class="QTextEdit" name="disclaimer_textbox">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>0</y>
+        <width>1081</width>
+        <height>751</height>
        </rect>
       </property>
       <property name="font">
@@ -182,39 +215,6 @@
       </property>
       <property name="text">
        <string>Education Level</string>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QWidget" name="disclaimer">
-     <attribute name="title">
-      <string>Disclaimer</string>
-     </attribute>
-     <widget class="QCheckBox" name="consent_checkbox">
-      <property name="geometry">
-       <rect>
-        <x>770</x>
-        <y>760</y>
-        <width>321</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>I confirm my consent to the test and for my data to be stored</string>
-      </property>
-     </widget>
-     <widget class="QTextEdit" name="disclaimer_textbox">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>0</y>
-        <width>1081</width>
-        <height>751</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>18</pointsize>
-       </font>
       </property>
      </widget>
     </widget>

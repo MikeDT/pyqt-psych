@@ -25,7 +25,7 @@ class MyWizard(QtWidgets.QMainWindow):
         self.disclaimer_text_file_loc = 'text\\Disclaimer.txt'
         self.instruct_text_file_loc = 'text\\Instructions.txt'
 
-        # Import the designer UI and name the window
+        # Import the QT designer UI and name the window
         self.window = uic.loadUi(self.ui_file_loc, self)
         self.setWindowTitle('Ellsberg, Pullman and Colman Test')
 
@@ -54,9 +54,11 @@ class MyWizard(QtWidgets.QMainWindow):
         self.window.next_btn.clicked.connect(self.next_button_clicked)
         self.window.save_btn.clicked.connect(self.save_button_clicked)
         self.window.tabs.currentChanged.connect(self.refresh_nav_buttons)
+        self.window.tabs.currentChanged.connect(self.check_disclaimer_nav)
 
         # Import all the text from external sources (simplifies future changes)
-        # and set the fill the text boxes (read only to prevent user edits)
+        # adjust with the appropriate text and fill the text boxes
+        # and set to read only to prevent user edits
         self.get_set_text()
 
         # Set the default visibility for the nav buttons and show the screen
@@ -121,7 +123,7 @@ class MyWizard(QtWidgets.QMainWindow):
         for education in education_list:
             self.window.edu_combobox.addItem(education)
 
-    def get_read_cond_all(self, condition_combo_file):
+    def set_cond_all(self, condition_combo_file):
         """
         Reads either the master condition list or the list that is stored per
         trial and updates teh MyWizard class with the current conditions
@@ -153,14 +155,14 @@ class MyWizard(QtWidgets.QMainWindow):
         if condition_combo_file.readline() == '':
             condition_combo_file.close()
             condition_combo_file = open(self.condition_combo_master_loc, 'r')
-            self.get_read_cond_all(condition_combo_file)
+            self.set_cond_all(condition_combo_file)
             condition_combo_file.close()
             print('new combo list created from master - ',
                   self.condition_combo_lst)
         else:
             condition_combo_file.close()
             condition_combo_file = open(self.condition_combo_dynamic_loc, 'r')
-            self.get_read_cond_all(condition_combo_file)
+            self.set_cond_all(condition_combo_file)
             condition_combo_file.close()
             print('old combo list read from drive - ',
                   self.condition_combo_lst)
@@ -182,8 +184,7 @@ class MyWizard(QtWidgets.QMainWindow):
         """
         Dictates the actions for clicking the back button on a given screen
         using the screen_fxn_dict dictionary that houses the screen dispay
-        functions, selected by the screen + button tuple that interacts with
-        the screen_nav_graph dictionary.
+        functions
         """
         self.window.tabs.setCurrentIndex(self.window.tabs.currentIndex() - 1)
         self.window.next_btn.show()
@@ -196,8 +197,7 @@ class MyWizard(QtWidgets.QMainWindow):
         """
         Dictates the actions for clicking the next button on a given screen
         using the screen_fxn_dict dictionary that houses the screen dispay
-        functions, selected by the screen + button tuple that interacts with
-        the screen_nav_graph dictionary.
+        functions
         """
         self.window.tabs.setCurrentIndex(self.window.tabs.currentIndex() + 1)
         self.window.next_btn.show()
@@ -205,6 +205,23 @@ class MyWizard(QtWidgets.QMainWindow):
         if self.window.tabs.currentIndex() == 5:
             self.window.next_btn.hide()
             self.show_save_check()
+
+    def check_disclaimer_nav(self):
+        """
+        Ensures navigation cannot happen past the  disclaimer screen unless
+        consent has been provided via the consent_checkbox
+        """
+        if self.window.consent_checkbox.isChecked() is False:
+            if self.window.tabs.currentIndex() > 1:
+                self.window.tabs.setCurrentIndex(1)
+                self.window.save_btn.hide()
+                self.window.back_btn.show()
+                self.window.next_btn.show()
+                self.refresh_nav_buttons()
+            else:
+                self.refresh_nav_buttons()
+        else:
+            self.refresh_nav_buttons()
 
     def refresh_nav_buttons(self):
         """
@@ -222,15 +239,47 @@ class MyWizard(QtWidgets.QMainWindow):
             self.window.next_btn.show()
             self.window.back_btn.show()
 
-    def is_task_complete(self, results):
+    def check_task_complete(self):
         """
         Checks all activities, demographics etc have been submitted prior to
-        allowing the participant to save and exit
+        allowing the participant to save and exit.  Should tasks not be
+        complete an error message will be supplied to the user detailing
+        the issue(s)
         """
-        return True
-        #  return error for what is not yet submitted
+        complete = True
+        error_message = 'The following errors are preventing saving: '
+        if len(self.window.username_textbox.text()) > 0:
+            complete *= True
+        else:
+            complete *= False
+            error_message += 'username is blank, '
+        if self.window.consent_checkbox.isChecked():
+            complete *= True
+        else:
+            complete *= False
+            error_message += 'consent was not provided, '
+        if self.window.age_spinbox.value() > 0:
+            complete *= True
+        else:
+            complete *= False
+            error_message += 'age is 0, '
+        if str(self.window.edu_combobox.currentText()) != '':
+            complete *= True
+        else:
+            complete *= False
+            error_message += 'education level was not provided, '
+            print(self.window.edu_combobox.currentText())
+        if str(self.window.gender_combobox.currentText()) != '':
+            complete *= True
+        else:
+            complete *= False
+            error_message += 'gender was not provided, '
+            print(self.window.gender_combobox.currentText())
+        error_message = error_message[:-2] + '.'
+        print(error_message)
+        return complete
 
-    def urn_selected_check(self):
+    def check_urn_selected(self):
         """
         Selects which urn (i.e. random of fifty fifty/ff), is selected
         when a users selects a radio button
@@ -273,12 +322,12 @@ class MyWizard(QtWidgets.QMainWindow):
             count += 1
         return csv_content
 
-    def marble_result(self):
+    def get_marble_result(self):
         """
         Checks the marble returned from the given urn based upon the shuffled
         marble distribution for the fifty fifty (ff) and random urns
         """
-        urn_selected = self.urn_selected_check()
+        urn_selected = self.check_urn_selected()
         trial = self.ff_urn_draw_count + self.random_urn_draw_count
         if urn_selected is None:
             return "No urn selected..."
@@ -309,7 +358,7 @@ class MyWizard(QtWidgets.QMainWindow):
         Updates the screen with the resultant marble when the draw marble
         button is clicked
         """
-        marble_returned = self.marble_result()
+        marble_returned = self.get_marble_result()
         self.window.marble_result_textbox.setText(marble_returned)
 
     def show_save_check(self):
@@ -328,7 +377,7 @@ class MyWizard(QtWidgets.QMainWindow):
         random conditions in the batch and exits the application
         """
         results = self.get_details()
-        if self.is_task_complete(results):
+        if self.check_task_complete():
             for result in results:
                 self.csv_results_db.write(result)
                 self.csv_results_db.write('\n')
@@ -363,7 +412,7 @@ class MyWizard(QtWidgets.QMainWindow):
 
 app = QtWidgets.QApplication([])
 wizard = MyWizard()
-wizard.setWindowTitle('MyWizard Example')
+wizard.setWindowTitle('Ellsberg, Pullman and Colman Test')
 wizard.show()
 app.exec_()
 
@@ -371,5 +420,5 @@ app.exec_()
 # write intro text
 # write debrief text
 # add images (and image loc, maybe generate auto via matplotlib, probably easiest)
-# sort task complete check
-# sort navigation beyond consent screen (bounce back)
+# sort task complete check error message
+# abstract file import to another class?
