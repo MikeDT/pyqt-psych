@@ -6,11 +6,14 @@ Created on Fri Dec 27 13:23:25 2019
 """
 
 from PyQt5 import QtWidgets, uic
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt
 import random
 import sys
+from os import listdir
 
 
-class MyWizard(QtWidgets.QMainWindow):
+class Primary_GUI(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,6 +35,11 @@ class MyWizard(QtWidgets.QMainWindow):
         # Open the 'database' table, set relevant file loc
         self.csv_results_db = open('results\\csv_results_db.csv', 'a')
 
+        # Import images & set front screen image
+        self.pixmap_dict = {}
+        self.set_image_dict()
+        self.window.front_screen.setPixmap(self.pixmap_dict["Front_Screen"])
+
         # Adjust the combobox content to support the valid values
         self.set_gender_types()
         self.set_edu_types()
@@ -44,10 +52,10 @@ class MyWizard(QtWidgets.QMainWindow):
          self.blue_marbles_rand) = self.get_random_partic_cond()
         self.random_urn_draw_count = 0
         self.ff_urn_draw_count = 0
-        self.max_trials = 2
+        self.max_trials = 1
         self.results = []
-        self.set_random_urn()
         self.set_urn_random_dist()
+        self.set_random_urn_info()
 
         # Connect the buttons and tabs to the relevant functions
         self.window.back_btn.clicked.connect(self.back_button_clicked)
@@ -66,16 +74,52 @@ class MyWizard(QtWidgets.QMainWindow):
         self.window.save_btn.hide()
         self.window.show()
 
-    def set_random_urn(self):
+    def set_image_dict(self):
+        """
+        Import and set the images for the urns into the pixmap_dict dictionary
+        for importing into the gui.  Images must pngs and named according to
+        the scheme colour/grey + _ + 5050/random + _ + condition(i.e. number of
+        marbles).  e.g. colour_5050_100.png
+        """
+        files = listdir('images')
+        for file in files:
+            if file == 'Front_Screen.png':
+                pixmap = QPixmap('images\\' + file)
+                pixmap = pixmap.scaled(1001, 811,
+                                       Qt.KeepAspectRatio,
+                                       Qt.SmoothTransformation)
+                self.pixmap_dict['Front_Screen'] = pixmap
+            elif file.endswith('.png'):
+                dict_key = file[:-4].split('_')  # condition, random, colour
+                dict_key[2] = int(dict_key[2])
+                pixmap = QPixmap('images\\' + file)
+                pixmap = pixmap.scaled(350, 525,
+                                       Qt.KeepAspectRatio,
+                                       Qt.SmoothTransformation)
+                self.pixmap_dict[tuple(dict_key)] = pixmap
+            else:
+                print('FYI - Non png file detected in image folder - ', file)
+
+    def set_random_urn_info(self):
         """
         Sets the urn that is random (i.e. not 50/50)
         """
         if self.random_urn_position == 0:
             self.window.left_urn_textbox.setText("Random Urn")
+            self.window.urn_left_image.setPixmap(
+                    self.pixmap_dict[("grey", "random", self.urn_condition)])
             self.window.right_urn_textbox.setText("50/50 Urn")
+            self.window.urn_right_image.setPixmap(
+                    self.pixmap_dict[("colour", "5050", self.urn_condition)])
         else:
             self.window.left_urn_textbox.setText("50/50 Urn")
+            self.window.urn_left_image.setPixmap(
+                    self.pixmap_dict[("colour", "5050", self.urn_condition)])
             self.window.right_urn_textbox.setText("Random Urn")
+            self.window.urn_right_image.setPixmap(
+                    self.pixmap_dict[("grey", "random", self.urn_condition)])
+        self.window.left_urn_textbox.setAlignment(Qt.AlignCenter)
+        self.window.right_urn_textbox.setAlignment(Qt.AlignCenter)
         self.draw_marble_button.clicked.connect(
           self.draw_marble_button_clicked)
 
@@ -360,6 +404,7 @@ class MyWizard(QtWidgets.QMainWindow):
         """
         marble_returned = self.get_marble_result()
         self.window.marble_result_textbox.setText(marble_returned)
+        self.window.marble_result_textbox.setAlignment(Qt.AlignCenter)
 
     def show_save_check(self):
         """
@@ -383,7 +428,7 @@ class MyWizard(QtWidgets.QMainWindow):
                 self.csv_results_db.write('\n')
             self.csv_results_db.close()
             self.set_next_partic_cond()
-            sys.exit(app.exec_())
+            sys.exit(QtWidgets.QApplication([]).exec_())
 
     def get_set_text(self):
         """
@@ -409,16 +454,9 @@ class MyWizard(QtWidgets.QMainWindow):
         self.window.instr_textbox.setText(self.instruction_text)
         self.window.instr_textbox.setReadOnly(True)
 
-
-app = QtWidgets.QApplication([])
-wizard = MyWizard()
-wizard.setWindowTitle('Ellsberg, Pullman and Colman Test')
-wizard.show()
-app.exec_()
-
 # To Do
 # write intro text
 # write debrief text
-# add images (and image loc, maybe generate auto via matplotlib, probably easiest)
+# write readme
 # sort task complete check error message
 # abstract file import to another class?
