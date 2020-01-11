@@ -1,0 +1,12 @@
+Thanks for taking part in the experiment.  You've been helping us explore the Ellsberg paradox and the ambiguity effect. So you have a reference point these were the historic findings:
+
+
+When attempting to draw a ball of a specified colour either from an urn containing 50 red balls and 50 blue balls or from an
+urn containing an unknown ratio of 100 red and blue balls, the majority of decision-makers prefer the known-risk urn, and this ambiguity
+aversion effect violates expected utility theory. 
+
+
+In an experimental investigation that Pullman and Colman performed in 2008 found the effect of urn size on ambiguity aversion, for 149 participants, was non-significant with levels of aversion when choosing from urns containing 2, 10, or 100 balls. 
+
+
+The occurrence of a substantial and significant ambiguity aversion effect even in the smallest urn suggests that influential theoretical interpretations of ambiguity aversion may need to be reconsidered.

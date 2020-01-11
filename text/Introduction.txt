@@ -1,2 +1,6 @@
-<b>Introduction</b><br/>
-blurb
+You've volunteered to participate in a psychology experiment with a rich history.  An area first explored by Ellsberg in 1961 it tackles our perception of risk and reward and the decisions we make when faced with differing degrees of uncertainty.
+
+Specifically, this is a replica of the Pulford and Colman (2008) experiment, but within a computer programme.  Navigation of the test is just like a regular windows application, so when you're ready click next to progress to the disclaimer which you need to read and presuming you're comfortable with it provide consent.
+
+
+Thanks for your participation!!

@@ -2,7 +2,7 @@
 """
 Created on Fri Dec 27 13:23:25 2019
 
-@author: miketaylor
+@author: DZLR3
 """
 
 from PyQt5 import QtWidgets, uic
@@ -27,6 +27,8 @@ class Primary_GUI(QtWidgets.QMainWindow):
         self.intro_text_file_loc = 'text\\Introduction.txt'
         self.disclaimer_text_file_loc = 'text\\Disclaimer.txt'
         self.instruct_text_file_loc = 'text\\Instructions.txt'
+        self.debrief_text_file_loc = 'text\\Debrief.txt'
+        self.config_text_file_loc = 'config\\config.txt'
 
         # Import the QT designer UI and name the window
         self.window = uic.loadUi(self.ui_file_loc, self)
@@ -52,10 +54,15 @@ class Primary_GUI(QtWidgets.QMainWindow):
          self.blue_marbles_rand) = self.get_random_partic_cond()
         self.random_urn_draw_count = 0
         self.ff_urn_draw_count = 0
-        self.max_trials = 1
         self.results = []
         self.set_urn_random_dist()
         self.set_random_urn_info()
+
+        # Get the config file and set the maximum trials (i.e. the most draws)
+        # and the required trials (i.e. the minimum draws).  1 and 1 in the
+        # default case, but support added for more diverse selection
+        # experiments
+        self.max_trials, self.req_trials = self.get_config()
 
         # Connect the buttons and tabs to the relevant functions
         self.window.back_btn.clicked.connect(self.back_button_clicked)
@@ -72,7 +79,17 @@ class Primary_GUI(QtWidgets.QMainWindow):
         # Set the default visibility for the nav buttons and show the screen
         self.window.back_btn.hide()
         self.window.save_btn.hide()
+        self.window.error_textbox.hide()
         self.window.show()
+
+    def get_config(self):
+        """
+        Reads the config file and returns the max_trials and req_trials
+        """
+        config_file = open(self.config_text_file_loc, 'r').read()
+        max_trials = int(config_file.split('\n')[0].split(' = ')[1])
+        req_trials = int(config_file.split('\n')[1].split(' = ')[1])
+        return (max_trials, req_trials)
 
     def set_image_dict(self):
         """
@@ -277,11 +294,13 @@ class Primary_GUI(QtWidgets.QMainWindow):
             self.window.back_btn.hide()
         elif self.window.tabs.currentIndex() == 5:
             self.show_save_check()
+            self.show_debrief_check()
             self.window.next_btn.hide()
             self.window.back_btn.show()
         else:
             self.window.next_btn.show()
             self.window.back_btn.show()
+            self.window.save_btn.hide()
 
     def check_task_complete(self):
         """
@@ -302,11 +321,11 @@ class Primary_GUI(QtWidgets.QMainWindow):
         else:
             complete *= False
             error_message += 'consent was not provided, '
-        if self.window.age_spinbox.value() > 0:
+        if self.window.age_spinbox.value() > 17:
             complete *= True
         else:
             complete *= False
-            error_message += 'age is 0, '
+            error_message += 'must be an adult (18+) to participate, '
         if str(self.window.edu_combobox.currentText()) != '':
             complete *= True
         else:
@@ -319,9 +338,20 @@ class Primary_GUI(QtWidgets.QMainWindow):
             complete *= False
             error_message += 'gender was not provided, '
             print(self.window.gender_combobox.currentText())
+        trial = self.ff_urn_draw_count + self.random_urn_draw_count
+        trial_delta_req = trial - self.req_trials
+        trial_delta_max = trial - self.max_trials
+        print(self.req_trials, self.max_trials, trial)
+        if trial == self.req_trials:
+            complete *= True
+        elif trial < self.req_trials:
+            error_message += (str(abs(trial_delta_req)) +
+                              'too few marble draws executed, ')
+        elif trial > self.max_trials:
+            error_message += (str(abs(trial_delta_max)) +
+                              'too many marble draws executed (restart the app), ')        
         error_message = error_message[:-2] + '.'
-        print(error_message)
-        return complete
+        return (complete, error_message)
 
     def check_urn_selected(self):
         """
@@ -416,19 +446,35 @@ class Primary_GUI(QtWidgets.QMainWindow):
         else:
             self.window.save_btn.hide()
 
+    def show_debrief_check(self):
+        """
+        Check whether the save button should be shown, based upon the
+        completion of all the relevant criteria (consent, demographics, test)
+        """
+        trial = self.ff_urn_draw_count + self.random_urn_draw_count
+        if trial >= self.req_trials:
+            self.window.debrief_textbox.setText(self.debrief_text)
+        else:
+            pass
+
     def save_button_clicked(self):
         """
         Saves the demographics to csv, closes the csv, sets the remaining
         random conditions in the batch and exits the application
         """
         results = self.get_details()
-        if self.check_task_complete():
+        (validity, error_message) = self.check_task_complete()
+        if validity:
             for result in results:
                 self.csv_results_db.write(result)
                 self.csv_results_db.write('\n')
             self.csv_results_db.close()
             self.set_next_partic_cond()
             sys.exit(QtWidgets.QApplication([]).exec_())
+        else:
+            self.window.error_textbox.show()
+            self.window.error_textbox.setText(error_message)
+            self.window.error_textbox.setReadOnly(True)
 
     def get_set_text(self):
         """
@@ -453,10 +499,6 @@ class Primary_GUI(QtWidgets.QMainWindow):
                                   str(self.all_marbles))
         self.window.instr_textbox.setText(self.instruction_text)
         self.window.instr_textbox.setReadOnly(True)
-
-# To Do
-# write intro text
-# write debrief text
-# write readme
-# sort task complete check error message
-# abstract file import to another class?
+        self.debrief_text = open(self.debrief_text_file_loc, 'r').read()
+        self.window.debrief_textbox.setText('Experiment not yet complete...')
+        self.window.instr_textbox.setReadOnly(True)
