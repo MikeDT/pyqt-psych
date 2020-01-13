@@ -1,0 +1,2 @@
+max_trials = 1
+req_trials = 1
