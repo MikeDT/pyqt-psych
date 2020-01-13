@@ -1,2 +1,2 @@
-max_trials = 5
-req_trials = 2
+max_trials = 1
+req_trials = 1

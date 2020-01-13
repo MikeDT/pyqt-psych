@@ -1,17 +1,2 @@
-User,Consent_Provided,Age,Education_Level,Gender,Urn_Condition,Run,Marble_Received,Urn_Selected,Random_Urn
-hwl, True, 20, Bachelors, Female, 2, 0, Blue, 0, 1
-hgfd, True, 18, Bachelors, Other, 10, 0, Blue, 0, 1
-123123, True, 22, Bachelors, Female, 100, 0, Blue, 0, 1
-123123, True, 22, Bachelors, Female, 100, 1, Red, 1, 1
-55, True, 55, High School, Prefer Not To Say, 2, 0, Blue, 1, 0
-55, True, 55, High School, Prefer Not To Say, 2, 1, Red, 1, 0
-r54, True, 33, High School, Prefer Not To Say, 10, 0, Blue, 1, 0
-r54, True, 33, High School, Prefer Not To Say, 10, 1, Red, 1, 0
-r54, True, 33, High School, Prefer Not To Say, 10, 2, Blue, 1, 0
-r54, True, 33, High School, Prefer Not To Say, 10, 3, Blue, 1, 0
-r54, True, 33, High School, Prefer Not To Say, 10, 4, Red, 1, 0
-342, True, 22, High School, Prefer Not To Say, 100, 0, Red, 1, 0
-342, True, 22, High School, Prefer Not To Say, 100, 1, Red, 1, 0
-342, True, 22, High School, Prefer Not To Say, 100, 2, Blue, 1, 0
-342, True, 22, High School, Prefer Not To Say, 100, 3, Blue, 1, 0
-342, True, 22, High School, Prefer Not To Say, 100, 4, Blue, 1, 0
+User,Consent_Provided,Age,Education_Level,Gender,Urn_Condition,Trial,Marble_Received,Random_Urn_Selected,Random_Urn_Pos
+55, True, 55, Bachelors, Prefer Not To Say, 2, 0, Blue, 0, 0

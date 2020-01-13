@@ -119,20 +119,22 @@ class Primary_GUI(QtWidgets.QMainWindow):
 
     def set_random_urn_info(self):
         """
-        Sets the urn that is random (i.e. not 50/50)
+        Sets the urn that is random (i.e. not 50/50) based on the
+        random_urn_position varibale pulled from the file.
+        NB - counterintuitively 1 denotes left NOT right
         """
-        if self.random_urn_position == 0:
-            self.window.left_urn_textbox.setText("Random Urn")
+        if self.random_urn_position == 1:  # 1 denotes random urn on left
+            self.window.left_urn_textbox.setText("Random Urn (B)")
             self.window.urn_left_image.setPixmap(
                     self.pixmap_dict[("grey", "random", self.urn_condition)])
-            self.window.right_urn_textbox.setText("50/50 Urn")
+            self.window.right_urn_textbox.setText("50/50 Urn (A)")
             self.window.urn_right_image.setPixmap(
                     self.pixmap_dict[("colour", "5050", self.urn_condition)])
         else:
-            self.window.left_urn_textbox.setText("50/50 Urn")
+            self.window.left_urn_textbox.setText("50/50 Urn (A)")
             self.window.urn_left_image.setPixmap(
                     self.pixmap_dict[("colour", "5050", self.urn_condition)])
-            self.window.right_urn_textbox.setText("Random Urn")
+            self.window.right_urn_textbox.setText("Random Urn (B)")
             self.window.urn_right_image.setPixmap(
                     self.pixmap_dict[("grey", "random", self.urn_condition)])
         self.window.left_urn_textbox.setAlignment(Qt.AlignCenter)
@@ -188,7 +190,9 @@ class Primary_GUI(QtWidgets.QMainWindow):
         """
         Reads either the master condition list or the list that is stored per
         trial and updates teh MyWizard class with the current conditions
-        and the remaining future conditions in the condition_combo_lst
+        and the remaining future conditions in the condition_combo_lst, then
+        shuffles them to randomise the remaining combos in the combination
+        run
         """
         self.condition_combo_lst = []
         lines = condition_combo_file.readlines()
@@ -199,6 +203,7 @@ class Primary_GUI(QtWidgets.QMainWindow):
                      int(combo[2]),
                      int(combo[3]),)
             self.condition_combo_lst.append(combo)
+        random.shuffle(self.condition_combo_lst)
 
     def get_random_partic_cond(self):
         """
@@ -357,25 +362,29 @@ class Primary_GUI(QtWidgets.QMainWindow):
         """
         Selects which urn (i.e. random of fifty fifty/ff), is selected
         when a users selects a radio button
+        NB there is scope for confusion between urn selection (1 = random)
+        and random urn position (1 = left).  Care should be taken when
+        amending this function
         """
         if self.window.left_urn_a_radiobutton.isChecked():
             if self.random_urn_position == 0:
-                urn_selected = 1  # random
-            else:
                 urn_selected = 0  # fifty fifty
+            else:
+                urn_selected = 1  # random
         elif self.window.right_urn_b_radiobutton.isChecked():
             if self.random_urn_position == 1:
-                urn_selected = 1  # random
-            else:
                 urn_selected = 0  # fifty fifty
+            else:
+                urn_selected = 1  # random
         else:
             urn_selected = None
         return urn_selected
 
-    def get_details(self):
+    def get_save_details(self):
         """
         Get the all the details from the experiment (incl. demographics and
-        consent), and cast them into a csv ready string
+        consent), and cast them into a csv ready string, then return the 
+        content as a list
         """
         username = str(self.window.username_textbox.text())
         consent = str(self.window.consent_checkbox.isChecked())
@@ -391,7 +400,7 @@ class Primary_GUI(QtWidgets.QMainWindow):
                                 urn_condition + ', ' +
                                 str(self.results[count][0]) + ', ' +  # run
                                 str(self.results[count][1]) + ', ' +  # marble
-                                str(self.results[count][2]) + ', ' +  # urn
+                                str(self.results[count][2]) + ', ' +  # urn chosen
                                 str(self.results[count][3])))  # random urn pos
             count += 1
         return csv_content
@@ -403,26 +412,33 @@ class Primary_GUI(QtWidgets.QMainWindow):
         """
         urn_selected = self.check_urn_selected()
         trial = self.ff_urn_draw_count + self.random_urn_draw_count
+
+        # check if any urn has been selected
         if urn_selected is None:
             return "No urn selected..."
+
+        # check that the maximum number of trials hasn't been exceeded
         if trial >= self.max_trials:
             return 'No more draws allowed, the experiment is over'
-        if ((urn_selected == 0) & (self.random_urn_position == 0)) or \
-           ((urn_selected == 1) & (self.random_urn_position == 1)):
+
+        # check the urn selected (1 is the ranodm urn) and draw the next marble
+        # in sequence (or announce the urn is empty) and append to result list
+        if urn_selected == 1:
             if self.random_urn_draw_count >= len(self.random_urn_distribution):
-                marble_returned = 'The urn selected is now empty'
+                marble_returned = 'The random urn selected is now empty'
             else:
                 index = self.random_urn_draw_count
                 marble_returned = self.random_urn_distribution[index]
                 self.random_urn_draw_count += 1
-        elif ((urn_selected == 1) & (self.random_urn_position == 0)) or \
-             ((urn_selected == 0) & (self.random_urn_position == 1)):
+                print('random urn selected')
+        else:
             if self.ff_urn_draw_count >= len(self.ff_urn_distribution):
-                marble_returned = 'The urn selected is now empty'
+                marble_returned = 'The 50 50 urn selected is now empty'
             else:
                 index = self.ff_urn_draw_count
                 marble_returned = self.ff_urn_distribution[index]
                 self.ff_urn_draw_count += 1
+                print('5050 urn selected')
         self.results.append((trial, marble_returned,
                              urn_selected, self.random_urn_position))
         return marble_returned
@@ -462,7 +478,7 @@ class Primary_GUI(QtWidgets.QMainWindow):
         Saves the demographics to csv, closes the csv, sets the remaining
         random conditions in the batch and exits the application
         """
-        results = self.get_details()
+        results = self.get_save_details()
         (validity, error_message) = self.check_task_complete()
         if validity:
             for result in results:

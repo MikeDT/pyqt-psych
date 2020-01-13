@@ -83,7 +83,7 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>4</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="intro">
      <attribute name="title">
@@ -296,7 +296,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Urn A</string>
+       <string>Select Urn</string>
       </property>
      </widget>
      <widget class="QRadioButton" name="right_urn_b_radiobutton">
@@ -309,7 +309,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Urn B</string>
+       <string>Select Urn</string>
       </property>
      </widget>
      <widget class="QTextEdit" name="right_urn_textbox">
